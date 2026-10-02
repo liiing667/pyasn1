@@ -88,6 +88,7 @@ The package is thirty-two modules; four carry most of the weight:
 | `codec/ber/eoo.py` | The end-of-octets singleton |
 | `codec/cer/*`, `codec/der/*` | Derived codecs, sharing BER's objects by identity |
 | `codec/native/*` | Conversion to and from Python dicts, lists and scalars |
+| `codec/json/*` | Conversion to and from self-describing JSON documents; the decoder infers types from envelope `type` tags when no `asn1Spec` is given |
 | `compat/integer.py` | A single `to_bytes` helper |
 | `debug.py` | The logging facility; see [The debug hook](#the-debug-hook) |
 | `error.py` | The exception hierarchy rooted at `PyAsn1Error` |
@@ -1882,4 +1883,3 @@ them as a drive-by; each needs its own dedicated change with tests.
   literal text. Not worth a churn-heavy rewrite mid-release; if ever fixed,
   do it as a dedicated pass verified with `tox -e docs`, since the file is
   compiled into the `-W` build.
-

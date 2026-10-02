@@ -1,6 +1,14 @@
 Revision 0.7.0, released XX-XX-2026
 ---------------------------------------
 
+- Added a JSON codec (``pyasn1.codec.json``) turning ASN.1 values into
+  self-describing JSON documents and back. Every value is wrapped in an
+  envelope carrying its ASN.1 base type name, so decoding works without
+  an ``asn1Spec`` schema, inferring open types such as ANY and CHOICE.
+  SEQUENCE/SET component order and SEQUENCE OF/SET OF element order
+  survive the round-trip; OCTET STRING and ANY payloads are Base64
+  encoded. Malformed documents, empty payloads and unknown type tags
+  raise ``PyAsn1Error``
 - Fixed OverflowError from BER/CER/DER length values that fit in the
   supported 8-octet length field but exceed the platform maximum readable
   size. Such oversized definite lengths are now rejected with PyAsn1Error.
