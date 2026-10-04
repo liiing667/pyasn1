@@ -1,6 +1,16 @@
 Revision 0.7.0, released XX-XX-2026
 ---------------------------------------
 
+- Added a self-describing JSON codec, ``pyasn1.codec.json``. The
+  ``encoder.encode`` serializes ASN.1 values to JSON documents of
+  ``{"type": ..., "value": ...}`` nodes; ``decoder.decode`` parses them
+  back to ASN.1 objects, returning ``(value, rest)`` like the BER family
+  codecs. Type labels travel with the payload, so ASN.1 types are inferred
+  without an ``asn1Spec`` (including open types such as ``Any`` and
+  ``Choice``), component order is preserved for ``SEQUENCE``/``SET`` and
+  ``SEQUENCE OF``/``SET OF``, and malformed input, empty values and
+  unknown tags raise ``JsonDecodeError`` (a ``PyAsn1Error`` subclass). The
+  existing BER/CER/DER/native codecs are unchanged.
 - Fixed OverflowError from BER/CER/DER length values that fit in the
   supported 8-octet length field but exceed the platform maximum readable
   size. Such oversized definite lengths are now rejected with PyAsn1Error.

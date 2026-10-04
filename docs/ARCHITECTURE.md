@@ -65,7 +65,7 @@ here.
 
 ### Module map
 
-The package is thirty-two modules; four carry most of the weight:
+The package is thirty-five modules; four carry most of the weight:
 `type/univ.py` (~3,300 lines), `codec/ber/decoder.py` (~2,200),
 `codec/ber/encoder.py` (~960), `type/constraint.py` (~750).
 
@@ -88,6 +88,7 @@ The package is thirty-two modules; four carry most of the weight:
 | `codec/ber/eoo.py` | The end-of-octets singleton |
 | `codec/cer/*`, `codec/der/*` | Derived codecs, sharing BER's objects by identity |
 | `codec/native/*` | Conversion to and from Python dicts, lists and scalars |
+| `codec/json/*` | Self-describing JSON serialization with schema-less type inference |
 | `compat/integer.py` | A single `to_bytes` helper |
 | `debug.py` | The logging facility; see [The debug hook](#the-debug-hook) |
 | `error.py` | The exception hierarchy rooted at `PyAsn1Error` |
@@ -1181,6 +1182,37 @@ registered in `native.encoder.TYPE_MAP`. A subclass "fixed" via
 `Encoder.SINGLE_ITEM_ENCODER` while the assignment stands produces no
 observable effect: the debugging that follows is time spent on a path the
 module-level `encode` never takes.
+
+### The JSON codec
+
+`codec/json/` serializes ASN.1 values to JSON documents and back. Like
+`native`, it derives from nothing and its maps are written from scratch, so
+a type registered for the BER family is never visible to it.
+
+Every value is encoded as a self-describing object
+`{"type": <label>, "value": <json>}`, where the label is the pyasn1 class
+name (`Integer`, `SequenceOf`, `UTF8String`, ...). Scalars map to JSON
+natives (`Integer`/`Enumerated` to number, `Boolean` to boolean, `Null` to
+null, `ObjectIdentifier`/`RelativeOID` to dotted string, character strings
+and the `useful` time types to string), `OctetString` and `Any` map to
+base64 of their octets, `BitString` to its binary string, and the
+constructed types map to JSON objects (`Sequence`/`Set`/`Choice`, keyed by
+component name) or arrays (`SequenceOf`/`SetOf`). Because the labels travel
+with the payload, `json.decoder.decode` reconstructs ASN.1 types without an
+`asn1Spec` — including open types such as `Any` and `Choice`, for which it
+builds a `componentType` on the fly from the decoded components. Component
+order is preserved in both directions (`OrderedDict` on encode,
+`object_pairs_hook` on decode).
+
+`json.encoder.encode` returns the JSON document as `str`;
+`json.decoder.decode` accepts `str`, `bytes` or an already-parsed object
+and returns `(value, rest)` with `rest` always empty, mirroring the BER
+family's calling convention. Malformed substrate, missing or empty values,
+unknown type labels, schema/label mismatches and unknown component names
+all raise `JsonDecodeError`, a `PyAsn1Error` subclass defined in
+`json/decoder.py` — no `KeyError` escapes. With an `asn1Spec`, the decoder
+is schema-driven like `native`'s, but strict: unknown component names and
+missing required (non-optional, non-defaulted) components are errors.
 
 ## The decoder pipeline
 
